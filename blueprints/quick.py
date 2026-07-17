@@ -12,7 +12,6 @@ from utils.quick_predictor import (
     find_quick_matches,
     parse_candidate_inputs,
 )
-from utils.auth_guard import login_required
 from utils.score_rank_validator import validate_score_rank_match
 
 
@@ -20,7 +19,6 @@ quick_bp = Blueprint("quick", __name__, url_prefix="/quick")
 
 
 @quick_bp.route("/", methods=["GET", "POST"])
-@login_required
 def index():
     """Render the quick prediction form and optional prediction results."""
     context = {
@@ -59,7 +57,6 @@ def index():
 
 
 @quick_bp.route("/download", methods=["POST"])
-@login_required
 def download():
     """Download quick prediction rows within score plus or minus 3."""
     try:

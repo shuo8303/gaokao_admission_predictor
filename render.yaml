@@ -4,12 +4,3 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
-    envVars:
-      - key: SMS_PROVIDER
-        value: console
-      - key: ALIYUN_SMS_SIGN_NAME
-        value: 速通互联验证服务
-      - key: ALIYUN_SMS_TEMPLATE_CODE
-        value: "100001"
-      - key: ALIYUN_SMS_TEMPLATE_PARAM
-        value: '{"code":"##code##"}'

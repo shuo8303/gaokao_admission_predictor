@@ -13,7 +13,6 @@ from utils.data_loader import (
     load_admission_data,
     read_preference_file,
 )
-from utils.auth_guard import login_required
 from utils.precise_predictor import parse_precise_inputs, predict_first_admission
 from utils.score_rank_validator import validate_score_rank_match
 
@@ -22,7 +21,6 @@ precise_bp = Blueprint("precise", __name__, url_prefix="/precise")
 
 
 @precise_bp.route("/", methods=["GET", "POST"])
-@login_required
 def index():
     """Render precise prediction form and optional result."""
     context = {
