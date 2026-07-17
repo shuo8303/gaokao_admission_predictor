@@ -49,7 +49,12 @@ def index():
             context["prediction"] = predict_first_admission(
                 preferences, admission_data, score, rank
             )
-        except (ValueError, DataNotFoundError, DataFormatError) as exc:
+        except DataFormatError:
+            context["error"] = (
+                "志愿表无法识别。志愿表列顺序："
+                "学校代号、学校名称、专业代号、专业名称。"
+            )
+        except (ValueError, DataNotFoundError) as exc:
             context["error"] = str(exc)
 
     return render_template("precise_predict.html", **context)
