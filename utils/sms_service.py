@@ -27,6 +27,7 @@ def send_verification_code(phone, config):
     """Send a one-time verification code with the configured provider."""
     normalized_phone = normalize_phone(phone)
     provider = config["SMS_PROVIDER"].lower()
+    print(f"[短信服务] provider={provider}, phone=****{normalized_phone[-4:]}")
 
     if provider == "console":
         return _send_console_code(normalized_phone, config)
@@ -105,7 +106,8 @@ def _send_aliyun_code(phone, config):
     runtime = runtime_models.RuntimeOptions()
 
     try:
-        client.send_sms_verify_code_with_options(request, runtime)
+        response = client.send_sms_verify_code_with_options(request, runtime)
+        print(f"[阿里云短信] SendSmsVerifyCode response: {_summarize_aliyun_response(response)}")
     except Exception as exc:
         raise SmsSendError(_format_aliyun_error(exc)) from exc
 
@@ -163,6 +165,15 @@ def _extract_aliyun_verify_result(response):
     body = getattr(response, "body", None)
     model = getattr(body, "model", None)
     return getattr(model, "verify_result", None)
+
+
+def _summarize_aliyun_response(response):
+    """Return a short printable summary of an Aliyun SDK response."""
+    body = getattr(response, "body", None)
+    if body is None:
+        return str(response)
+
+    return str(body)
 
 
 def _format_aliyun_error(error):
