@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}快速预测 - 浙江省高考录取预测系统{% endblock %}
+
+{% block content %}
+<main class="page-shell">
+    <section class="page-heading">
+        <p class="eyebrow">快速预测</p>
+        <h1>按成绩与位次筛选可达专业</h1>
+        <p>输入高考成绩和高考位次，系统会先校验成绩与位次是否匹配，再筛选分数线不低于考生成绩 3 分以下、且位次达到公布投档线的学校和专业。</p>
+    </section>
+
+    <section class="form-panel" aria-labelledby="quick-form-title">
+        <h2 id="quick-form-title">考生信息</h2>
+        <form class="predict-form" method="post" action="{{ url_for('quick.index') }}">
+            <label>
+                <span>高考成绩</span>
+                <input
+                    type="number"
+                    name="score"
+                    min="0"
+                    required
+                    value="{{ form_values.score }}"
+                    placeholder="例如：620"
+                >
+            </label>
+
+            <label>
+                <span>高考位次</span>
+                <input
+                    type="number"
+                    name="rank"
+                    min="1"
+                    required
+                    value="{{ form_values.rank }}"
+                    placeholder="例如：32144"
+                >
+            </label>
+
+            <label>
+                <span>排序方式</span>
+                <select name="sort_by">
+                    {% for value, label in sort_labels.items() %}
+                        <option value="{{ value }}" {% if form_values.sort_by == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <button class="primary-button" type="submit">开始快速预测</button>
+        </form>
+        <p class="form-help">注意：位次必须落在该分数对应的最高位次和最低位次之间。</p>
+    </section>
+
+    {% if error %}
+        <section class="message-panel error-panel" role="alert">
+            <h2>无法完成预测</h2>
+            <p>{{ error }}</p>
+        </section>
+    {% endif %}
+
+    {% if submitted and not error %}
+        <section class="result-section" aria-labelledby="quick-result-title">
+            <div class="result-heading">
+                <div>
+                    <p class="eyebrow">预测结果</p>
+                    <h2 id="quick-result-title">符合条件的专业</h2>
+                </div>
+                <p class="result-count">共 {{ results|length }} 条</p>
+            </div>
+
+            <p class="result-warning">仅表示分数线不低于考生成绩 3 分以下且位次达到公布投档线，不代表最终录取。</p>
+
+            {% if results %}
+                <form class="download-form" method="post" action="{{ url_for('quick.download') }}">
+                    <input type="hidden" name="score" value="{{ form_values.score }}">
+                    <input type="hidden" name="rank" value="{{ form_values.rank }}">
+                    <input type="hidden" name="sort_by" value="{{ form_values.sort_by }}">
+                    <button class="secondary-button" type="submit">下载上下 3 分范围结果</button>
+                </form>
+
+                <div class="table-wrap">
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>学校代号</th>
+                                <th>学校名称</th>
+                                <th>专业代号</th>
+                                <th>专业名称</th>
+                                <th>投档最低分</th>
+                                <th>投档最低位次</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in results %}
+                                <tr>
+                                    <td>{{ item.school_code }}</td>
+                                    <td>{{ item.school_name }}</td>
+                                    <td>{{ item.major_code }}</td>
+                                    <td>{{ item.major_name }}</td>
+                                    <td>{{ item.minimum_score }}</td>
+                                    <td>{{ item.minimum_rank }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="message-panel">
+                    <h3>暂无符合条件的专业</h3>
+                    <p>当前位次未达到分数线窗口内已公布投档线中的记录。</p>
+                </div>
+            {% endif %}
+        </section>
+    {% endif %}
+</main>
+{% endblock %}

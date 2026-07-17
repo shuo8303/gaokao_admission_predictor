@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}精准预测 - 浙江省高考录取预测系统{% endblock %}
+
+{% block content %}
+<main class="page-shell">
+    <section class="page-heading">
+        <p class="eyebrow">精准预测</p>
+        <h1>按志愿顺序预测首个可能投档志愿</h1>
+        <p>上传志愿表后，系统会先校验成绩与位次是否匹配，再按照志愿顺序逐项匹配官方投档线，返回第一个可能完成投档的志愿。</p>
+    </section>
+
+    <section class="form-panel" aria-labelledby="precise-form-title">
+        <h2 id="precise-form-title">考生信息与志愿表</h2>
+        <form
+            class="predict-form precise-form"
+            method="post"
+            action="{{ url_for('precise.index') }}"
+            enctype="multipart/form-data"
+        >
+            <label>
+                <span>高考成绩</span>
+                <input
+                    type="number"
+                    name="score"
+                    min="0"
+                    required
+                    value="{{ form_values.score }}"
+                    placeholder="例如：620"
+                >
+            </label>
+
+            <label>
+                <span>高考位次</span>
+                <input
+                    type="number"
+                    name="rank"
+                    min="1"
+                    required
+                    value="{{ form_values.rank }}"
+                    placeholder="例如：32144"
+                >
+            </label>
+
+            <label class="file-input-label">
+                <span>志愿表文件</span>
+                <input type="file" name="preference_file" accept=".xlsx,.xls,.csv" required>
+            </label>
+
+            <button class="primary-button" type="submit">开始精准预测</button>
+        </form>
+        <p class="form-help">志愿表列顺序：学校代号、学校名称、专业代号、专业名称。</p>
+    </section>
+
+    {% if error %}
+        <section class="message-panel error-panel" role="alert">
+            <h2>无法完成预测</h2>
+            <p>{{ error }}</p>
+        </section>
+    {% endif %}
+
+    {% if submitted and not error %}
+        <section class="result-section" aria-labelledby="precise-result-title">
+            <div class="result-heading">
+                <div>
+                    <p class="eyebrow">预测结果</p>
+                    <h2 id="precise-result-title">精准预测结论</h2>
+                </div>
+            </div>
+
+            <p class="result-warning">本系统采用浙江省教育考试院公布的普通类平行投档数据进行预测。预测仅供参考，最终结果以浙江省教育考试院公布为准。</p>
+
+            {% if prediction %}
+                <article class="prediction-card">
+                    <p class="school-code">志愿序号 {{ prediction.preference_index }} · {{ prediction.school_code }} · {{ prediction.major_code }}</p>
+                    <h3>{{ prediction.school_name }}</h3>
+                    <p class="major-name">{{ prediction.major_name }}</p>
+
+                    <dl class="metric-list">
+                        <div>
+                            <dt>投档最低分</dt>
+                            <dd>{{ prediction.minimum_score }}</dd>
+                        </div>
+                        <div>
+                            <dt>投档最低位次</dt>
+                            <dd>{{ prediction.minimum_rank }}</dd>
+                        </div>
+                    </dl>
+
+                    <div class="basis-box">
+                        <h4>预测依据</h4>
+                        <p>{{ prediction.basis }}</p>
+                    </div>
+                </article>
+            {% else %}
+                <div class="message-panel">
+                    <h3>暂无预测录取结果。</h3>
+                    <p>所有志愿均未达到当前官方投档线数据中的分数和位次要求。</p>
+                </div>
+            {% endif %}
+        </section>
+    {% endif %}
+</main>
+{% endblock %}

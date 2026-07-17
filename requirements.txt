@@ -1,0 +1,8 @@
+Flask
+pandas
+openpyxl
+xlrd
+alibabacloud_dypnsapi20170525
+alibabacloud_credentials
+alibabacloud_tea_openapi
+alibabacloud_tea_util

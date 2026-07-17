@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 浙江省高考录取预测系统{% endblock %}
+
+{% block content %}
+<main class="home-page">
+    <section class="hero-section">
+        <div class="hero-content">
+            <p class="eyebrow">National Higher Education Entrance Examination Admission Predictor</p>
+            <h1>浙江省高考录取预测系统</h1>
+            <p class="hero-text">
+                基于浙江省教育考试院公布的普通类一段平行投档数据，
+                为考生提供志愿填报结束后的录取结果参考预测。
+            </p>
+            <p class="hero-warning">预测仅供参考，不代表官方录取结果。</p>
+        </div>
+    </section>
+
+    <section class="feature-section" aria-labelledby="feature-title">
+        <div class="section-heading">
+            <p class="eyebrow">核心功能</p>
+            <h2 id="feature-title">选择预测方式</h2>
+        </div>
+
+        <div class="feature-grid">
+            <article class="feature-card">
+                <div class="card-icon" aria-hidden="true">速</div>
+                <h3>快速预测</h3>
+                <p>输入高考成绩和位次，筛选所有达到公布投档线的学校与专业。</p>
+                <a class="button-link" href="{{ url_for('quick.index') }}">进入快速预测</a>
+            </article>
+
+            <article class="feature-card">
+                <div class="card-icon" aria-hidden="true">准</div>
+                <h3>精准预测</h3>
+                <p>上传志愿表，系统按照志愿顺序逐项判断可能完成投档的志愿。</p>
+                <a class="button-link" href="{{ url_for('precise.index') }}">进入精准预测</a>
+            </article>
+        </div>
+    </section>
+
+    <section class="intro-section" aria-labelledby="intro-title">
+        <div class="intro-panel">
+            <p class="eyebrow">预测说明</p>
+            <h2 id="intro-title">数据来源与适用范围</h2>
+            <p>
+                本系统面向浙江省普通高考本科普通类录取预测，
+                使用官方公布的普通类平行投档数据进行判断。
+            </p>
+            <p>
+                快速预测仅表示考生成绩或位次达到公布投档线，
+                精准预测会结合考生志愿顺序给出首个可能投档志愿。
+            </p>
+        </div>
+    </section>
+
+    <section class="coming-soon-section" aria-label="后续开发提示">
+        <p id="quick-predict-note">快速预测页面已接入，可输入成绩和位次筛选可达专业。</p>
+        <p id="precise-predict-note">精准预测页面已接入，可上传志愿表按顺序预测首个可能投档志愿。</p>
+    </section>
+</main>
+{% endblock %}

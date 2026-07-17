@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}浙江省高考录取预测系统{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="nav-container" aria-label="主导航">
+            <a class="brand" href="{{ url_for('main.index') }}">浙江高考录取预测</a>
+            <div class="nav-actions">
+                <span class="nav-note">普通类一段平行投档数据预测</span>
+                {% if session.get("user_phone") %}
+                    <span class="user-phone">{{ session.get("user_nickname", "已登录用户") }}</span>
+                    <form method="post" action="{{ url_for('auth.logout') }}">
+                        <button class="link-button" type="submit">退出</button>
+                    </form>
+                {% else %}
+                    <a class="nav-login" href="{{ url_for('auth.login') }}">登录</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container" role="status">
+                {% for category, message in messages %}
+                    <p class="flash-message flash-{{ category }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <footer class="site-footer">
+        <p>预测结果仅供参考，最终结果以浙江省教育考试院公布为准。</p>
+    </footer>
+</body>
+</html>
