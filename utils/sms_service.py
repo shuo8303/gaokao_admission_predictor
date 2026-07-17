@@ -108,6 +108,7 @@ def _send_aliyun_code(phone, config):
     try:
         response = client.send_sms_verify_code_with_options(request, runtime)
         print(f"[阿里云短信] SendSmsVerifyCode response: {_summarize_aliyun_response(response)}")
+        _ensure_aliyun_success(response)
     except Exception as exc:
         raise SmsSendError(_format_aliyun_error(exc)) from exc
 
@@ -165,6 +166,17 @@ def _extract_aliyun_verify_result(response):
     body = getattr(response, "body", None)
     model = getattr(body, "model", None)
     return getattr(model, "verify_result", None)
+
+
+def _ensure_aliyun_success(response):
+    """Raise an error when Aliyun returns a failed response body."""
+    body = getattr(response, "body", None)
+    success = getattr(body, "success", None)
+
+    if success is False:
+        code = getattr(body, "code", "Unknown")
+        message = getattr(body, "message", "短信发送失败")
+        raise SmsSendError(f"{code}: {message}")
 
 
 def _summarize_aliyun_response(response):
