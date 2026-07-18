@@ -70,6 +70,9 @@ def _save_preference_file(uploaded_file):
         raise ValueError("志愿表仅支持 xlsx、xls 或 csv 文件。")
 
     safe_name = secure_filename(uploaded_file.filename)
+    if not safe_name or Path(safe_name).suffix.lower() != suffix:
+        safe_name = f"preference{suffix}"
+
     stored_name = f"{uuid4().hex}_{safe_name}"
     upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
     upload_folder.mkdir(parents=True, exist_ok=True)
