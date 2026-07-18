@@ -12,6 +12,11 @@
 
     <section class="form-panel" aria-labelledby="precise-form-title">
         <h2 id="precise-form-title">考生信息与志愿表</h2>
+        <div class="download-form">
+            <a class="secondary-button" href="{{ url_for('precise.download_template') }}">
+                下载志愿表模板
+            </a>
+        </div>
         <form
             class="predict-form precise-form"
             method="post"

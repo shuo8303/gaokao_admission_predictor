@@ -1,5 +1,11 @@
 """Routes for precise prediction with uploaded preference files."""
+from io import BytesIO
+from pathlib import Path
+from uuid import uuid4
 
+from flask import Blueprint, current_app, render_template, request, send_file
+from openpyxl import Workbook
+from werkzeug.utils import secure_filename
 from pathlib import Path
 from uuid import uuid4
 
@@ -18,6 +24,38 @@ from utils.score_rank_validator import validate_score_rank_match
 
 
 precise_bp = Blueprint("precise", __name__, url_prefix="/precise")
+
+@precise_bp.route("/template")
+def download_template():
+    """Download a standard preference table template."""
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "志愿表模板"
+
+    headers = ["学校代号", "学校名称", "专业代号", "专业名称"]
+    examples = [
+        ["0001", "浙江大学", "017", "示例专业名称"],
+        ["1121", "北京交通大学", "008", "示例专业名称"],
+    ]
+
+    worksheet.append(headers)
+    for row in examples:
+        worksheet.append(row)
+
+    for column_cells in worksheet.columns:
+        max_length = max(len(str(cell.value or "")) for cell in column_cells)
+        worksheet.column_dimensions[column_cells[0].column_letter].width = max_length + 6
+
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="志愿表模板.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
 
 @precise_bp.route("/", methods=["GET", "POST"])
