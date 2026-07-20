@@ -17,6 +17,7 @@ from utils.data_loader import (
 )
 from utils.precise_predictor import parse_precise_inputs, predict_first_admission
 from utils.score_rank_validator import validate_score_rank_match
+from utils.usage_logger import log_prediction
 
 
 precise_bp = Blueprint("precise", __name__, url_prefix="/precise")
@@ -86,6 +87,22 @@ def index():
             admission_data = load_admission_data()
             context["prediction"] = predict_first_admission(
                 preferences, admission_data, score, rank
+            )
+            log_prediction(
+                feature="precise",
+                score=score,
+                rank=rank,
+                has_result=bool(context["prediction"]),
+                result_school=(
+                    context["prediction"]["school_name"]
+                    if context["prediction"]
+                    else None
+                ),
+                result_major=(
+                    context["prediction"]["major_name"]
+                    if context["prediction"]
+                    else None
+                ),
             )
         except DataFormatError:
             context["error"] = (

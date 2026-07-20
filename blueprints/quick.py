@@ -13,6 +13,7 @@ from utils.quick_predictor import (
     parse_candidate_inputs,
 )
 from utils.score_rank_validator import validate_score_rank_match
+from utils.usage_logger import log_prediction
 
 
 quick_bp = Blueprint("quick", __name__, url_prefix="/quick")
@@ -49,6 +50,15 @@ def index():
                 score,
                 rank,
                 context["form_values"]["sort_by"],
+            )
+            first_result = context["results"][0] if context["results"] else {}
+            log_prediction(
+                feature="quick",
+                score=score,
+                rank=rank,
+                has_result=bool(context["results"]),
+                result_school=first_result.get("school_name"),
+                result_major=first_result.get("major_name"),
             )
         except (ValueError, DataNotFoundError, DataFormatError) as exc:
             context["error"] = str(exc)

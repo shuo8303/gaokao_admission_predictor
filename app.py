@@ -1,11 +1,12 @@
 """Application entry point for the Gaokao Admission Predictor."""
 
-from flask import Flask
+from flask import Flask, request
 
 from blueprints.main import main_bp
 from blueprints.precise import precise_bp
 from blueprints.quick import quick_bp
 from config import Config
+from utils.usage_logger import log_visit
 
 
 def create_app():
@@ -15,6 +16,15 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(quick_bp)
     app.register_blueprint(precise_bp)
+
+    @app.before_request
+    def record_visit():
+        """Record page visits for lightweight traffic statistics."""
+        if request.endpoint == "static":
+            return
+
+        log_visit()
+
     return app
 
 
