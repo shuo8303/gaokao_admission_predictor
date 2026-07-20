@@ -2,6 +2,7 @@
 
 from flask import Flask, request
 
+from blueprints.admin import admin_bp
 from blueprints.main import main_bp
 from blueprints.precise import precise_bp
 from blueprints.quick import quick_bp
@@ -13,6 +14,7 @@ def create_app():
     """Create and configure the Flask application instance."""
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(quick_bp)
     app.register_blueprint(precise_bp)

@@ -49,6 +49,99 @@ def log_prediction(feature, score, rank, has_result, result_school=None, result_
     )
 
 
+def get_usage_statistics(limit=20):
+    """Return dashboard statistics for the admin usage page.
+
+    The function returns an empty-state dictionary when MySQL is not configured
+    or temporarily unavailable, so the admin page can render a friendly message
+    instead of crashing.
+    """
+    try:
+        connection = _connect()
+        if connection is None:
+            return _empty_statistics(configured=False)
+
+        with closing(connection):
+            _ensure_tables(connection)
+
+            return {
+                "configured": True,
+                "total_visits": _fetch_scalar(
+                    connection,
+                    "SELECT COUNT(*) FROM visit_logs",
+                ),
+                "total_predictions": _fetch_scalar(
+                    connection,
+                    "SELECT COUNT(*) FROM prediction_logs",
+                ),
+                "quick_predictions": _fetch_scalar(
+                    connection,
+                    "SELECT COUNT(*) FROM prediction_logs WHERE feature = %s",
+                    ("quick",),
+                ),
+                "precise_predictions": _fetch_scalar(
+                    connection,
+                    "SELECT COUNT(*) FROM prediction_logs WHERE feature = %s",
+                    ("precise",),
+                ),
+                "successful_predictions": _fetch_scalar(
+                    connection,
+                    "SELECT COUNT(*) FROM prediction_logs WHERE has_result = 1",
+                ),
+                "failed_predictions": _fetch_scalar(
+                    connection,
+                    "SELECT COUNT(*) FROM prediction_logs WHERE has_result = 0",
+                ),
+                "recent_visits": _fetch_all(
+                    connection,
+                    """
+                    SELECT path, ip, user_agent, created_at
+                    FROM visit_logs
+                    ORDER BY id DESC
+                    LIMIT %s
+                    """,
+                    (limit,),
+                ),
+                "recent_predictions": _fetch_all(
+                    connection,
+                    """
+                    SELECT feature, score, `rank`, has_result, result_school,
+                           result_major, ip, created_at
+                    FROM prediction_logs
+                    ORDER BY id DESC
+                    LIMIT %s
+                    """,
+                    (limit,),
+                ),
+                "recent_quick_predictions": _fetch_all(
+                    connection,
+                    """
+                    SELECT feature, score, `rank`, has_result, result_school,
+                           result_major, ip, created_at
+                    FROM prediction_logs
+                    WHERE feature = %s
+                    ORDER BY id DESC
+                    LIMIT %s
+                    """,
+                    ("quick", limit),
+                ),
+                "recent_precise_predictions": _fetch_all(
+                    connection,
+                    """
+                    SELECT feature, score, `rank`, has_result, result_school,
+                           result_major, ip, created_at
+                    FROM prediction_logs
+                    WHERE feature = %s
+                    ORDER BY id DESC
+                    LIMIT %s
+                    """,
+                    ("precise", limit),
+                ),
+            }
+    except Exception:
+        return _empty_statistics(configured=True)
+
+
 def _run_safely(sql, params=None):
     """Run one SQL statement while shielding the application from DB errors."""
     try:
@@ -92,6 +185,44 @@ def _connect():
         charset="utf8mb4",
         autocommit=False,
     )
+
+
+def _fetch_scalar(connection, sql, params=None):
+    """Return the first column of the first row for a query."""
+    with connection.cursor() as cursor:
+        cursor.execute(sql, params or ())
+        row = cursor.fetchone()
+
+    if not row:
+        return 0
+
+    return row[0]
+
+
+def _fetch_all(connection, sql, params=None):
+    """Return all rows for a SELECT query as dictionaries."""
+    import pymysql
+
+    with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+        cursor.execute(sql, params or ())
+        return cursor.fetchall()
+
+
+def _empty_statistics(configured):
+    """Build a predictable empty statistics object for template rendering."""
+    return {
+        "configured": configured,
+        "total_visits": 0,
+        "total_predictions": 0,
+        "quick_predictions": 0,
+        "precise_predictions": 0,
+        "successful_predictions": 0,
+        "failed_predictions": 0,
+        "recent_visits": [],
+        "recent_predictions": [],
+        "recent_quick_predictions": [],
+        "recent_precise_predictions": [],
+    }
 
 
 def _ensure_tables(connection):

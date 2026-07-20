@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}后台统计 - 浙江省高考录取预测系统{% endblock %}
+
+{% block content %}
+<main class="page-shell admin-page">
+    <section class="page-heading">
+        <p class="eyebrow">Admin Dashboard</p>
+        <h1>网站使用统计</h1>
+        <p>
+            用于查看页面访问、快速预测和精准预测的使用情况。这里展示的是 MySQL
+            中记录的匿名统计数据，不包含用户上传的志愿表原文件。
+        </p>
+    </section>
+
+    {% if not statistics.configured %}
+        <section class="message-panel warning-panel">
+            <h2>数据库统计尚未配置</h2>
+            <p>
+                请先在服务器环境变量中配置 MYSQL_HOST、MYSQL_USER、MYSQL_PASSWORD、
+                MYSQL_DATABASE 和 ADMIN_STATS_TOKEN。
+            </p>
+        </section>
+    {% endif %}
+
+    <section class="stats-grid" aria-label="核心统计数据">
+        <article class="stat-card">
+            <span>页面访问</span>
+            <strong>{{ statistics.total_visits }}</strong>
+            <p>所有非静态页面访问次数</p>
+        </article>
+        <article class="stat-card">
+            <span>预测总次数</span>
+            <strong>{{ statistics.total_predictions }}</strong>
+            <p>快速预测 + 精准预测</p>
+        </article>
+        <article class="stat-card">
+            <span>快速预测次数</span>
+            <strong>{{ statistics.quick_predictions }}</strong>
+            <p>用户输入分数和位次查询</p>
+        </article>
+        <article class="stat-card">
+            <span>精准预测次数</span>
+            <strong>{{ statistics.precise_predictions }}</strong>
+            <p>用户上传志愿表预测</p>
+        </article>
+        <article class="stat-card">
+            <span>预测成功</span>
+            <strong>{{ statistics.successful_predictions }}</strong>
+            <p>系统返回了预测学校和专业</p>
+        </article>
+        <article class="stat-card">
+            <span>暂无结果</span>
+            <strong>{{ statistics.failed_predictions }}</strong>
+            <p>未匹配到预测录取结果</p>
+        </article>
+    </section>
+
+    <section class="admin-section">
+        <div class="result-heading">
+            <h2>最近快速预测记录</h2>
+            <span class="result-count">最新 20 条</span>
+        </div>
+
+        {% if statistics.recent_quick_predictions %}
+            <div class="table-wrap">
+                <table class="result-table admin-table">
+                    <thead>
+                        <tr>
+                            <th>分数</th>
+                            <th>位次</th>
+                            <th>是否成功</th>
+                            <th>首个结果学校</th>
+                            <th>首个结果专业</th>
+                            <th>IP</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in statistics.recent_quick_predictions %}
+                            <tr>
+                                <td>{{ row.score or "-" }}</td>
+                                <td>{{ row.rank or "-" }}</td>
+                                <td>{{ "成功" if row.has_result else "暂无结果" }}</td>
+                                <td>{{ row.result_school or "-" }}</td>
+                                <td>{{ row.result_major or "-" }}</td>
+                                <td>{{ row.ip or "-" }}</td>
+                                <td>{{ row.created_at }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-text">暂时还没有快速预测记录。</p>
+        {% endif %}
+    </section>
+
+    <section class="admin-section">
+        <div class="result-heading">
+            <h2>最近精准预测记录</h2>
+            <span class="result-count">最新 20 条</span>
+        </div>
+
+        {% if statistics.recent_precise_predictions %}
+            <div class="table-wrap">
+                <table class="result-table admin-table">
+                    <thead>
+                        <tr>
+                            <th>分数</th>
+                            <th>位次</th>
+                            <th>是否成功</th>
+                            <th>预测学校</th>
+                            <th>预测专业</th>
+                            <th>IP</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in statistics.recent_precise_predictions %}
+                            <tr>
+                                <td>{{ row.score or "-" }}</td>
+                                <td>{{ row.rank or "-" }}</td>
+                                <td>{{ "成功" if row.has_result else "暂无结果" }}</td>
+                                <td>{{ row.result_school or "-" }}</td>
+                                <td>{{ row.result_major or "-" }}</td>
+                                <td>{{ row.ip or "-" }}</td>
+                                <td>{{ row.created_at }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-text">暂时还没有精准预测记录。</p>
+        {% endif %}
+    </section>
+
+    <section class="admin-section">
+        <div class="result-heading">
+            <h2>最近访问记录</h2>
+            <span class="result-count">最新 20 条</span>
+        </div>
+
+        {% if statistics.recent_visits %}
+            <div class="table-wrap">
+                <table class="result-table admin-table">
+                    <thead>
+                        <tr>
+                            <th>访问页面</th>
+                            <th>IP</th>
+                            <th>浏览器信息</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in statistics.recent_visits %}
+                            <tr>
+                                <td>{{ row.path }}</td>
+                                <td>{{ row.ip or "-" }}</td>
+                                <td class="user-agent-cell">{{ row.user_agent or "-" }}</td>
+                                <td>{{ row.created_at }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-text">暂时还没有访问记录。</p>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}
