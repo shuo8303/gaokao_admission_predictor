@@ -2,6 +2,57 @@
 
 {% block title %}后台统计 - 浙江省高考录取预测系统{% endblock %}
 
+{% macro pagination_controls(page_data, page_param) %}
+    {% if page_data.total_pages > 1 %}
+        <nav class="pagination-bar" aria-label="分页导航">
+            {% if page_data.has_previous %}
+                {% set previous_quick_page = page_data.previous_page if page_param == "quick_page" else request.args.get('quick_page', 1) %}
+                {% set previous_precise_page = page_data.previous_page if page_param == "precise_page" else request.args.get('precise_page', 1) %}
+                {% set previous_visit_page = page_data.previous_page if page_param == "visit_page" else request.args.get('visit_page', 1) %}
+                <a
+                    class="pagination-link"
+                    href="{{ url_for(
+                        'admin.stats',
+                        token=request.args.get('token'),
+                        quick_page=previous_quick_page,
+                        precise_page=previous_precise_page,
+                        visit_page=previous_visit_page
+                    ) }}"
+                >
+                    上一页
+                </a>
+            {% else %}
+                <span class="pagination-link disabled">上一页</span>
+            {% endif %}
+
+            <span class="pagination-status">
+                第 {{ page_data.current_page }} / {{ page_data.total_pages }} 页，
+                共 {{ page_data.total }} 条
+            </span>
+
+            {% if page_data.has_next %}
+                {% set next_quick_page = page_data.next_page if page_param == "quick_page" else request.args.get('quick_page', 1) %}
+                {% set next_precise_page = page_data.next_page if page_param == "precise_page" else request.args.get('precise_page', 1) %}
+                {% set next_visit_page = page_data.next_page if page_param == "visit_page" else request.args.get('visit_page', 1) %}
+                <a
+                    class="pagination-link"
+                    href="{{ url_for(
+                        'admin.stats',
+                        token=request.args.get('token'),
+                        quick_page=next_quick_page,
+                        precise_page=next_precise_page,
+                        visit_page=next_visit_page
+                    ) }}"
+                >
+                    下一页
+                </a>
+            {% else %}
+                <span class="pagination-link disabled">下一页</span>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endmacro %}
+
 {% block content %}
 <main class="page-shell admin-page">
     <section class="page-heading">
@@ -59,7 +110,7 @@
     <section class="admin-section">
         <div class="result-heading">
             <h2>最近快速预测记录</h2>
-            <span class="result-count">最新 20 条</span>
+            <span class="result-count">每页 {{ statistics.pagination.limit }} 条</span>
         </div>
 
         {% if statistics.recent_quick_predictions %}
@@ -91,6 +142,7 @@
                     </tbody>
                 </table>
             </div>
+            {{ pagination_controls(statistics.pagination.quick, "quick_page") }}
         {% else %}
             <p class="empty-text">暂时还没有快速预测记录。</p>
         {% endif %}
@@ -99,7 +151,7 @@
     <section class="admin-section">
         <div class="result-heading">
             <h2>最近精准预测记录</h2>
-            <span class="result-count">最新 20 条</span>
+            <span class="result-count">每页 {{ statistics.pagination.limit }} 条</span>
         </div>
 
         {% if statistics.recent_precise_predictions %}
@@ -131,6 +183,7 @@
                     </tbody>
                 </table>
             </div>
+            {{ pagination_controls(statistics.pagination.precise, "precise_page") }}
         {% else %}
             <p class="empty-text">暂时还没有精准预测记录。</p>
         {% endif %}
@@ -139,7 +192,7 @@
     <section class="admin-section">
         <div class="result-heading">
             <h2>最近访问记录</h2>
-            <span class="result-count">最新 20 条</span>
+            <span class="result-count">每页 {{ statistics.pagination.limit }} 条</span>
         </div>
 
         {% if statistics.recent_visits %}
@@ -165,6 +218,7 @@
                     </tbody>
                 </table>
             </div>
+            {{ pagination_controls(statistics.pagination.visits, "visit_page") }}
         {% else %}
             <p class="empty-text">暂时还没有访问记录。</p>
         {% endif %}

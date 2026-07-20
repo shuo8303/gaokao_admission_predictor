@@ -49,7 +49,7 @@ def log_prediction(feature, score, rank, has_result, result_school=None, result_
     )
 
 
-def get_usage_statistics(limit=20):
+def get_usage_statistics(limit=20, quick_page=1, precise_page=1, visit_page=1):
     """Return dashboard statistics for the admin usage page.
 
     The function returns an empty-state dictionary when MySQL is not configured
@@ -64,26 +64,33 @@ def get_usage_statistics(limit=20):
         with closing(connection):
             _ensure_tables(connection)
 
+            quick_total = _fetch_scalar(
+                connection,
+                "SELECT COUNT(*) FROM prediction_logs WHERE feature = %s",
+                ("quick",),
+            )
+            precise_total = _fetch_scalar(
+                connection,
+                "SELECT COUNT(*) FROM prediction_logs WHERE feature = %s",
+                ("precise",),
+            )
+            visit_total = _fetch_scalar(
+                connection,
+                "SELECT COUNT(*) FROM visit_logs",
+            )
+            quick_pagination = _build_pagination(quick_total, quick_page, limit)
+            precise_pagination = _build_pagination(precise_total, precise_page, limit)
+            visit_pagination = _build_pagination(visit_total, visit_page, limit)
+
             return {
                 "configured": True,
-                "total_visits": _fetch_scalar(
-                    connection,
-                    "SELECT COUNT(*) FROM visit_logs",
-                ),
+                "total_visits": visit_total,
                 "total_predictions": _fetch_scalar(
                     connection,
                     "SELECT COUNT(*) FROM prediction_logs",
                 ),
-                "quick_predictions": _fetch_scalar(
-                    connection,
-                    "SELECT COUNT(*) FROM prediction_logs WHERE feature = %s",
-                    ("quick",),
-                ),
-                "precise_predictions": _fetch_scalar(
-                    connection,
-                    "SELECT COUNT(*) FROM prediction_logs WHERE feature = %s",
-                    ("precise",),
-                ),
+                "quick_predictions": quick_total,
+                "precise_predictions": precise_total,
                 "successful_predictions": _fetch_scalar(
                     connection,
                     "SELECT COUNT(*) FROM prediction_logs WHERE has_result = 1",
@@ -98,20 +105,9 @@ def get_usage_statistics(limit=20):
                     SELECT path, ip, user_agent, created_at
                     FROM visit_logs
                     ORDER BY id DESC
-                    LIMIT %s
+                    LIMIT %s OFFSET %s
                     """,
-                    (limit,),
-                ),
-                "recent_predictions": _fetch_all(
-                    connection,
-                    """
-                    SELECT feature, score, `rank`, has_result, result_school,
-                           result_major, ip, created_at
-                    FROM prediction_logs
-                    ORDER BY id DESC
-                    LIMIT %s
-                    """,
-                    (limit,),
+                    (limit, _get_offset(visit_pagination["current_page"], limit)),
                 ),
                 "recent_quick_predictions": _fetch_all(
                     connection,
@@ -121,9 +117,9 @@ def get_usage_statistics(limit=20):
                     FROM prediction_logs
                     WHERE feature = %s
                     ORDER BY id DESC
-                    LIMIT %s
+                    LIMIT %s OFFSET %s
                     """,
-                    ("quick", limit),
+                    ("quick", limit, _get_offset(quick_pagination["current_page"], limit)),
                 ),
                 "recent_precise_predictions": _fetch_all(
                     connection,
@@ -133,10 +129,16 @@ def get_usage_statistics(limit=20):
                     FROM prediction_logs
                     WHERE feature = %s
                     ORDER BY id DESC
-                    LIMIT %s
+                    LIMIT %s OFFSET %s
                     """,
-                    ("precise", limit),
+                    ("precise", limit, _get_offset(precise_pagination["current_page"], limit)),
                 ),
+                "pagination": {
+                    "limit": limit,
+                    "quick": quick_pagination,
+                    "precise": precise_pagination,
+                    "visits": visit_pagination,
+                },
             }
     except Exception:
         return _empty_statistics(configured=True)
@@ -219,9 +221,35 @@ def _empty_statistics(configured):
         "successful_predictions": 0,
         "failed_predictions": 0,
         "recent_visits": [],
-        "recent_predictions": [],
         "recent_quick_predictions": [],
         "recent_precise_predictions": [],
+        "pagination": {
+            "limit": 20,
+            "quick": _build_pagination(0, 1, 20),
+            "precise": _build_pagination(0, 1, 20),
+            "visits": _build_pagination(0, 1, 20),
+        },
+    }
+
+
+def _get_offset(page, limit):
+    """Return the SQL OFFSET for a 1-based page number."""
+    return max(page - 1, 0) * limit
+
+
+def _build_pagination(total, current_page, limit):
+    """Build pagination metadata for one admin table."""
+    total_pages = max((total + limit - 1) // limit, 1)
+    safe_current_page = min(max(current_page, 1), total_pages)
+
+    return {
+        "total": total,
+        "current_page": safe_current_page,
+        "total_pages": total_pages,
+        "has_previous": safe_current_page > 1,
+        "has_next": safe_current_page < total_pages,
+        "previous_page": max(safe_current_page - 1, 1),
+        "next_page": min(safe_current_page + 1, total_pages),
     }
 
 

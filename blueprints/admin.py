@@ -22,5 +22,17 @@ def stats():
     if not expected_token or submitted_token != expected_token:
         abort(403)
 
-    statistics = get_usage_statistics()
+    statistics = get_usage_statistics(
+        quick_page=_get_page_argument("quick_page"),
+        precise_page=_get_page_argument("precise_page"),
+        visit_page=_get_page_argument("visit_page"),
+    )
     return render_template("admin_stats.html", statistics=statistics)
+
+
+def _get_page_argument(name):
+    """Read a positive page number from the query string."""
+    try:
+        return max(int(request.args.get(name, "1")), 1)
+    except ValueError:
+        return 1
