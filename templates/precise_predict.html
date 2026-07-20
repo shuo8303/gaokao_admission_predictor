@@ -12,10 +12,34 @@
 
     <section class="form-panel" aria-labelledby="precise-form-title">
         <h2 id="precise-form-title">考生信息与志愿表</h2>
-        <div class="download-form">
-            <a class="secondary-button" href="{{ url_for('precise.download_template') }}">
-                下载志愿表模板
-            </a>
+        <div class="template-actions">
+            <details class="guide-details">
+                <summary class="secondary-button">如何获取志愿表</summary>
+                <div class="guide-panel">
+                    <h3>是否已经有志愿表表格文件？</h3>
+
+                    <div class="guide-choice">
+                        <h4>是</h4>
+                        <p>参考志愿表模板，整理为正确格式后上传志愿表进行预测。</p>
+                    </div>
+
+                    <div class="guide-choice">
+                        <h4>否</h4>
+                        <ol>
+                            <li>登录志愿填报网站 <a href="https://pgzy.zjzs.net" target="_blank" rel="noreferrer">https://pgzy.zjzs.net</a></li>
+                            <li>选择普通类平行志愿，点击“查看明细”。</li>
+                            <li>滚轮滑动至页面最下方，点击“导出”。</li>
+                            <li>将导出的 PDF 转换成 xlsx 表格形式。</li>
+                            <li>参考志愿表模板，上传正确的志愿表进行预测。</li>
+                        </ol>
+                    </div>
+
+                    <a class="secondary-button" href="{{ url_for('precise.download_template') }}">
+                        下载志愿表模板
+                    </a>
+                </div>
+            </details>
+
         </div>
         <form
             class="predict-form precise-form"
@@ -92,9 +116,9 @@
                         </div>
                     </dl>
 
-                    <div class="basis-box">
-                        <h4>预测依据</h4>
-                        <p>{{ prediction.basis }}</p>
+                    <div class="admission-confirm-box">
+                        <p>恭喜您达到 {{ prediction.school_name }} {{ prediction.major_name }} 录取分数线，根据志愿顺序，您最有可能被该院校专业录取。</p>
+                        <p>您可以登录 {{ prediction.school_name }} 本科招生网或微信公众号，通过“录取查询”验证预测结果。</p>
                     </div>
                 </article>
             {% else %}

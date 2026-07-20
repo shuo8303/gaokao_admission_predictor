@@ -1,15 +1,11 @@
 """Routes for precise prediction with uploaded preference files."""
+
 from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
 from flask import Blueprint, current_app, render_template, request, send_file
 from openpyxl import Workbook
-from werkzeug.utils import secure_filename
-from pathlib import Path
-from uuid import uuid4
-
-from flask import Blueprint, current_app, render_template, request
 from werkzeug.utils import secure_filename
 
 from utils.data_loader import (
@@ -25,6 +21,7 @@ from utils.score_rank_validator import validate_score_rank_match
 
 precise_bp = Blueprint("precise", __name__, url_prefix="/precise")
 
+
 @precise_bp.route("/template")
 def download_template():
     """Download a standard preference table template."""
@@ -34,8 +31,11 @@ def download_template():
 
     headers = ["学校代号", "学校名称", "专业代号", "专业名称"]
     examples = [
-        ["0001", "浙江大学", "017", "示例专业名称"],
-        ["1121", "北京交通大学", "008", "示例专业名称"],
+        ["0001", "浙江大学", "011", "社会学"],
+        ["1", "浙江大学", "11", "社会学"],
+        ["1140", "北京邮电大学", "001", "计算机类（元班）"],
+        ["1140", "北京邮电大学", "1", "计算机类（元班）"],
+        ["学校、专业代号开头的0可省略", "无0也可识别", "代号结尾的0不可省略", "阅读后请将本行及示例删除"],
     ]
 
     worksheet.append(headers)

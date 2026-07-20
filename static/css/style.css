@@ -470,6 +470,65 @@ h3 {
     margin: 0 0 18px;
 }
 
+.template-actions {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0 0 18px;
+}
+
+.guide-details {
+    position: relative;
+}
+
+.guide-details summary {
+    list-style: none;
+}
+
+.guide-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.guide-panel {
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-card);
+    color: var(--color-text);
+    margin-top: 12px;
+    max-width: 720px;
+    padding: 22px;
+}
+
+.guide-panel h3,
+.guide-panel h4 {
+    margin-bottom: 8px;
+}
+
+.guide-panel p,
+.guide-panel li {
+    color: var(--color-muted);
+}
+
+.guide-choice {
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small);
+    margin-bottom: 14px;
+    padding: 14px;
+}
+
+.guide-choice ol {
+    margin: 0;
+    padding-left: 22px;
+}
+
+.guide-choice a {
+    color: var(--color-primary-dark);
+    font-weight: 800;
+}
+
 /* 结果、错误和表格展示。 */
 .result-section,
 .message-panel {
@@ -572,6 +631,27 @@ h3 {
 .basis-box h4 {
     font-size: 16px;
     margin: 0 0 8px;
+}
+
+.admission-confirm-box {
+    background: linear-gradient(135deg, #ecfdf5, #ffffff);
+    border: 1px solid #bbf7d0;
+    border-left: 5px solid #16a34a;
+    border-radius: var(--radius-small);
+    margin-top: 18px;
+    padding: 16px;
+}
+
+.admission-confirm-box p {
+    color: #166534;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.admission-confirm-box p:last-child {
+    color: #15803d;
+    font-weight: 700;
+    margin-bottom: 0;
 }
 
 .table-wrap {
