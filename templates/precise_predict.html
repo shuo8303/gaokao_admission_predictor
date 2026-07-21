@@ -124,11 +124,14 @@
                     {% if export_id %}
                         <div class="result-actions result-actions-centered">
                             <a
-                                class="secondary-button"
+                                class="secondary-button export-button"
                                 href="{{ url_for('precise.download_reached_preferences', export_id=export_id) }}"
+                                data-loading-text="正在导出，请稍候……"
+                                data-finished-text="导出完成"
                             >
                                 导出所有过线志愿
                             </a>
+                            <p class="export-wait-tip" hidden>导出所有志愿需要等待，请不要重复点击。</p>
                         </div>
                     {% endif %}
                 </article>
@@ -141,15 +144,44 @@
                 {% if export_id %}
                     <div class="result-actions result-actions-centered">
                         <a
-                            class="secondary-button"
+                            class="secondary-button export-button"
                             href="{{ url_for('precise.download_reached_preferences', export_id=export_id) }}"
+                            data-loading-text="正在导出，请稍候……"
+                            data-finished-text="导出完成"
                         >
                             导出所有过线志愿
                         </a>
+                        <p class="export-wait-tip" hidden>导出所有志愿需要等待，请不要重复点击。</p>
                     </div>
                 {% endif %}
             {% endif %}
         </section>
     {% endif %}
 </main>
+
+<script>
+    document.querySelectorAll(".export-button").forEach((button) => {
+        button.addEventListener("click", () => {
+            const loadingText = button.dataset.loadingText || "正在导出，请稍候……";
+            const finishedText = button.dataset.finishedText || "导出完成";
+            const tip = button.parentElement.querySelector(".export-wait-tip");
+
+            button.textContent = loadingText;
+            button.classList.add("is-loading");
+
+            if (tip) {
+                tip.hidden = false;
+            }
+
+            window.setTimeout(() => {
+                button.textContent = finishedText;
+                button.classList.remove("is-loading");
+
+                if (tip) {
+                    tip.textContent = "如果没有自动下载，请再次点击导出按钮。";
+                }
+            }, 3000);
+        });
+    });
+</script>
 {% endblock %}

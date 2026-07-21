@@ -1,5 +1,6 @@
 """Routes for precise prediction with uploaded preference files."""
 
+import json
 from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
@@ -93,11 +94,8 @@ def index():
             context["prediction"] = predict_first_admission(
                 preferences, admission_data, score, rank
             )
-            reached_preferences = evaluate_all_preferences(
-                preferences, admission_data, score, rank
-            )
-            context["export_id"] = _save_reached_preferences_export(
-                reached_preferences
+            context["export_id"] = _save_reached_preferences_export_task(
+                uploaded_path, score, rank
             )
             log_prediction(
                 feature="precise",
@@ -128,16 +126,26 @@ def index():
 
 @precise_bp.route("/export/<export_id>")
 def download_reached_preferences(export_id):
-    """Download the latest precise prediction pass-status report."""
+    """Generate and download the precise prediction pass-status report."""
     if not export_id or not export_id.replace("_", "").isalnum():
         abort(404)
 
-    export_path = Path(current_app.config["UPLOAD_FOLDER"]) / f"{export_id}.xlsx"
-    if not export_path.exists():
+    task = _load_reached_preferences_export_task(export_id)
+    if task is None:
         abort(404)
 
+    preferences = read_preference_file(task["preference_path"])
+    admission_data = load_admission_data()
+    reached_preferences = evaluate_all_preferences(
+        preferences,
+        admission_data,
+        task["score"],
+        task["rank"],
+    )
+    output = _build_reached_preferences_workbook(reached_preferences)
+
     return send_file(
-        export_path,
+        output,
         as_attachment=True,
         download_name="所有过线志愿.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -166,8 +174,58 @@ def _save_preference_file(uploaded_file):
     return stored_path
 
 
-def _save_reached_preferences_export(reached_preferences):
-    """Create an Excel report for every preference and return its file id."""
+def _save_reached_preferences_export_task(preference_path, score, rank):
+    """Persist a small export task and return its id.
+
+    Creating the full Excel file during prediction makes the result page slower.
+    The task file lets the result page render quickly, while the full report is
+    generated only if the user actually clicks the export button.
+    """
+    export_id = f"reached_preferences_{uuid4().hex}"
+    task_path = _get_export_task_path(export_id)
+    task_path.parent.mkdir(parents=True, exist_ok=True)
+
+    task = {
+        "preference_path": str(preference_path),
+        "score": score,
+        "rank": rank,
+    }
+    task_path.write_text(
+        json.dumps(task, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    return export_id
+
+
+def _load_reached_preferences_export_task(export_id):
+    """Load one export task from disk if it is still available."""
+    task_path = _get_export_task_path(export_id)
+    if not task_path.exists():
+        return None
+
+    try:
+        task = json.loads(task_path.read_text(encoding="utf-8"))
+        preference_path = Path(task["preference_path"])
+        if not preference_path.exists():
+            return None
+
+        return {
+            "preference_path": preference_path,
+            "score": int(task["score"]),
+            "rank": int(task["rank"]),
+        }
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def _get_export_task_path(export_id):
+    """Return the local JSON task path for an export id."""
+    return Path(current_app.config["UPLOAD_FOLDER"]) / f"{export_id}.json"
+
+
+def _build_reached_preferences_workbook(reached_preferences):
+    """Create an in-memory Excel report for every preference."""
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = "所有过线志愿"
@@ -204,9 +262,8 @@ def _save_reached_preferences_export(reached_preferences):
             max_length + 6
         )
 
-    export_id = f"reached_preferences_{uuid4().hex}"
-    upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
-    upload_folder.mkdir(parents=True, exist_ok=True)
-    workbook.save(upload_folder / f"{export_id}.xlsx")
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
 
-    return export_id
+    return output

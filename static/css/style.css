@@ -704,8 +704,22 @@ h3 {
 }
 
 .result-actions-centered {
+    align-items: center;
+    flex-direction: column;
     justify-content: center;
     margin-bottom: 0;
+}
+
+.export-button.is-loading {
+    opacity: 0.72;
+    pointer-events: none;
+}
+
+.export-wait-tip {
+    color: var(--color-muted);
+    font-size: 14px;
+    margin: 0;
+    text-align: center;
 }
 
 .site-footer {
