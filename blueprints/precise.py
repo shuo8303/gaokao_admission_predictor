@@ -4,7 +4,7 @@ from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
-from flask import Blueprint, current_app, render_template, request, send_file
+from flask import Blueprint, abort, current_app, render_template, request, send_file
 from openpyxl import Workbook
 from werkzeug.utils import secure_filename
 
@@ -15,7 +15,11 @@ from utils.data_loader import (
     load_admission_data,
     read_preference_file,
 )
-from utils.precise_predictor import parse_precise_inputs, predict_first_admission
+from utils.precise_predictor import (
+    evaluate_all_preferences,
+    parse_precise_inputs,
+    predict_first_admission,
+)
 from utils.score_rank_validator import validate_score_rank_match
 from utils.usage_logger import log_prediction
 
@@ -66,6 +70,7 @@ def index():
         "submitted": False,
         "error": None,
         "prediction": None,
+        "export_id": None,
         "form_values": {"score": "", "rank": ""},
     }
 
@@ -87,6 +92,12 @@ def index():
             admission_data = load_admission_data()
             context["prediction"] = predict_first_admission(
                 preferences, admission_data, score, rank
+            )
+            reached_preferences = evaluate_all_preferences(
+                preferences, admission_data, score, rank
+            )
+            context["export_id"] = _save_reached_preferences_export(
+                reached_preferences
             )
             log_prediction(
                 feature="precise",
@@ -115,6 +126,24 @@ def index():
     return render_template("precise_predict.html", **context)
 
 
+@precise_bp.route("/export/<export_id>")
+def download_reached_preferences(export_id):
+    """Download the latest precise prediction pass-status report."""
+    if not export_id or not export_id.replace("_", "").isalnum():
+        abort(404)
+
+    export_path = Path(current_app.config["UPLOAD_FOLDER"]) / f"{export_id}.xlsx"
+    if not export_path.exists():
+        abort(404)
+
+    return send_file(
+        export_path,
+        as_attachment=True,
+        download_name="所有过线志愿.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
 def _save_preference_file(uploaded_file):
     """Validate and save the uploaded preference file."""
     if not uploaded_file or not uploaded_file.filename:
@@ -135,3 +164,49 @@ def _save_preference_file(uploaded_file):
     uploaded_file.save(stored_path)
 
     return stored_path
+
+
+def _save_reached_preferences_export(reached_preferences):
+    """Create an Excel report for every preference and return its file id."""
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "所有过线志愿"
+
+    headers = [
+        "志愿顺序",
+        "学校代号",
+        "学校名称",
+        "专业代号",
+        "专业名称",
+        "最低分",
+        "最低位次",
+        "是否过线",
+    ]
+    worksheet.append(headers)
+
+    for preference in reached_preferences:
+        worksheet.append(
+            [
+                preference["preference_index"],
+                preference["school_code"],
+                preference["school_name"],
+                preference["major_code"],
+                preference["major_name"],
+                preference["minimum_score"],
+                preference["minimum_rank"],
+                preference["is_reached"],
+            ]
+        )
+
+    for column_cells in worksheet.columns:
+        max_length = max(len(str(cell.value or "")) for cell in column_cells)
+        worksheet.column_dimensions[column_cells[0].column_letter].width = (
+            max_length + 6
+        )
+
+    export_id = f"reached_preferences_{uuid4().hex}"
+    upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+    upload_folder.mkdir(parents=True, exist_ok=True)
+    workbook.save(upload_folder / f"{export_id}.xlsx")
+
+    return export_id

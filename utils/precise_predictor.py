@@ -36,6 +36,56 @@ def predict_first_admission(preferences, admission_data, score, rank):
     return None
 
 
+def evaluate_all_preferences(preferences, admission_data, score, rank):
+    """Return every preference with official line data and pass status.
+
+    The exported report keeps the user's original preference order. A
+    preference is marked as reached when it follows the same logic as precise
+    prediction: score is higher than the minimum score, or score equals the
+    minimum score and rank is not worse than the minimum rank.
+    """
+    evaluated_preferences = []
+
+    for preference in preferences.to_dict(orient="records"):
+        matched_program = _find_matching_program(preference, admission_data)
+
+        if matched_program is None:
+            evaluated_preferences.append(
+                {
+                    "preference_index": preference["preference_index"],
+                    "school_code": preference["school_code"],
+                    "school_name": preference["school_name"],
+                    "major_code": preference["major_code"],
+                    "major_name": preference["major_name"],
+                    "minimum_score": "",
+                    "minimum_rank": "",
+                    "is_reached": "-",
+                }
+            )
+            continue
+
+        reached = _is_line_reached(
+            score,
+            rank,
+            matched_program["minimum_score"],
+            matched_program["minimum_rank"],
+        )
+        evaluated_preferences.append(
+            {
+                "preference_index": preference["preference_index"],
+                "school_code": matched_program["school_code"],
+                "school_name": matched_program["school_name"],
+                "major_code": matched_program["major_code"],
+                "major_name": matched_program["major_name"],
+                "minimum_score": matched_program["minimum_score"],
+                "minimum_rank": matched_program["minimum_rank"],
+                "is_reached": "是" if reached else "-",
+            }
+        )
+
+    return evaluated_preferences
+
+
 def parse_precise_inputs(score_value, rank_value):
     """Validate precise prediction score and rank input."""
     try:
@@ -69,6 +119,11 @@ def _find_matching_program(preference, admission_data):
         return name_matches.iloc[0].to_dict()
 
     return None
+
+
+def _is_line_reached(score, rank, minimum_score, minimum_rank):
+    """Return whether a candidate reaches one published filing line."""
+    return score > minimum_score or (score == minimum_score and rank <= minimum_rank)
 
 
 def _build_prediction_basis(

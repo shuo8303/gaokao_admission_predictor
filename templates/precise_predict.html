@@ -120,12 +120,34 @@
                         <p>恭喜您达到 {{ prediction.school_name }} {{ prediction.major_name }} 录取分数线，根据志愿顺序，您最有可能被该院校专业录取。</p>
                         <p>您可以登录 {{ prediction.school_name }} 本科招生网或微信公众号，通过“录取查询”验证预测结果。</p>
                     </div>
+
+                    {% if export_id %}
+                        <div class="result-actions result-actions-centered">
+                            <a
+                                class="secondary-button"
+                                href="{{ url_for('precise.download_reached_preferences', export_id=export_id) }}"
+                            >
+                                导出所有过线志愿
+                            </a>
+                        </div>
+                    {% endif %}
                 </article>
             {% else %}
                 <div class="message-panel">
                     <h3>暂无预测录取结果。</h3>
                     <p>所有志愿均未达到当前官方投档线数据中的分数和位次要求。</p>
                 </div>
+
+                {% if export_id %}
+                    <div class="result-actions result-actions-centered">
+                        <a
+                            class="secondary-button"
+                            href="{{ url_for('precise.download_reached_preferences', export_id=export_id) }}"
+                        >
+                            导出所有过线志愿
+                        </a>
+                    </div>
+                {% endif %}
             {% endif %}
         </section>
     {% endif %}
