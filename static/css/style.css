@@ -722,6 +722,48 @@ h3 {
     text-align: center;
 }
 
+.closed-page {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-height: calc(100vh - 170px);
+    padding: 56px 24px;
+}
+
+.closed-card {
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.16), transparent 36%),
+        #ffffff;
+    border: 1px solid rgba(37, 99, 235, 0.14);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-card);
+    max-width: 760px;
+    padding: clamp(34px, 6vw, 58px);
+    text-align: center;
+}
+
+.closed-card h1 {
+    color: var(--color-primary-dark);
+    font-size: clamp(30px, 5vw, 48px);
+    line-height: 1.18;
+    margin: 10px 0 18px;
+}
+
+.closed-card p {
+    color: var(--color-muted);
+    font-size: 17px;
+    line-height: 1.8;
+}
+
+.closed-note {
+    background: var(--color-primary-soft);
+    border-radius: var(--radius-small);
+    color: var(--color-primary-dark) !important;
+    font-weight: 800;
+    margin-top: 22px;
+    padding: 14px 16px;
+}
+
 .site-footer {
     border-top: 1px solid var(--color-border);
     color: var(--color-muted);

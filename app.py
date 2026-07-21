@@ -1,6 +1,6 @@
 """Application entry point for the Gaokao Admission Predictor."""
 
-from flask import Flask, request
+from flask import Flask, render_template, request
 
 from blueprints.admin import admin_bp
 from blueprints.main import main_bp
@@ -18,6 +18,19 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(quick_bp)
     app.register_blueprint(precise_bp)
+
+    @app.before_request
+    def show_closed_page_when_needed():
+        """Show a temporary closed page before official filing lines publish."""
+        allowed_endpoints = {"static", "admin.stats"}
+
+        if not app.config["SITE_CLOSED"]:
+            return
+
+        if request.endpoint in allowed_endpoints:
+            return
+
+        return render_template("site_closed.html"), 503
 
     @app.before_request
     def record_visit():
